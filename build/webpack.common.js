@@ -11,7 +11,7 @@ module.exports = {
 
   output: {
     path: path.resolve(__dirname, "../www/js"),
-    filename: "[name].js?[chunkhash]",
+    filename: "[name].[chunkhash:10].js",
   },
 
   module: {
@@ -59,6 +59,7 @@ module.exports = {
   ],
 
   optimization: {
+    runtimeChunk: "single",
     splitChunks: {
       chunks: "all",
       name: "vendor",

@@ -9,6 +9,7 @@ module.exports = merge(common, {
     contentBase: path.join(__dirname, "../www"),
     historyApiFallback: true,
     publicPath: "/js/",
+    overlay: true,
     historyApiFallback: {
       rewrites: [{
           from: /\.js$/,
