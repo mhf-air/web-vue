@@ -1,0 +1,25 @@
+doctype html
+html(lang="cmn-Hans-CN")
+
+  head
+    meta(charset="utf-8")
+    meta(http-equiv="x-ua-compatible" content="ie=edge")
+    title My App
+  
+    meta(name="description" content="This is a description")
+    meta(name="viewport" content="width=device-width, initial-scale=1")
+  
+    link(rel="manifest" href="site.webmanifest")
+    link(rel="icon" type="image/png" href="lion.png")
+    link(rel="apple-touch-icon" href="/image/lion.svg")
+  
+    link(rel="stylesheet" href="/css/normalize.css")
+    link(rel="stylesheet" href="/css/main.css")
+  
+  body
+    div#app
+
+    each js in htmlWebpackPlugin.files.js
+      script(src="/" + js)
+
+//- title #{htmlWebpackPlugin.options.title}
