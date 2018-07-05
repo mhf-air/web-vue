@@ -2,7 +2,11 @@ const path = require("path")
 const HtmlWebpackPlugin = require("html-webpack-plugin")
 const VueLoaderPlugin = require("vue-loader/lib/plugin")
 
-const globalNodeModules = path.resolve(__dirname, "../node_modules")
+function resolve(dir) {
+  return path.resolve(__dirname, dir)
+}
+
+const globalNodeModules = resolve("../node_modules")
 
 module.exports = {
   entry: {
@@ -10,7 +14,7 @@ module.exports = {
   },
 
   output: {
-    path: path.resolve(__dirname, "../www/js"),
+    path: resolve("../www/js"),
     filename: "[name].[chunkhash:10].js",
   },
 
