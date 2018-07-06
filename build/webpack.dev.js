@@ -1,15 +1,26 @@
-const merge = require("webpack-merge")
+const { resolve } = require("./util.js")
 const common = require("./webpack.common.js")
-const path = require("path")
+
+const merge = require("webpack-merge")
+const webpack = require("webpack")
 
 module.exports = merge(common, {
   mode: "development",
   stats: "minimal",
+
+  output: {
+    // publicPath: "/",
+    path: resolve("www/js"),
+    filename: "[name].js",
+  },
+
   devServer: {
-    contentBase: path.join(__dirname, "../www"),
+    contentBase: resolve("www"),
     historyApiFallback: true,
     publicPath: "/js/",
     overlay: true,
+    open: true,
+    noInfo: true,
     historyApiFallback: {
       rewrites: [{
           from: /\.js$/,
@@ -39,4 +50,13 @@ module.exports = merge(common, {
       ],
     },
   },
+
+  plugins: [
+    new webpack.DefinePlugin({
+      "process.env": {
+        NODE_ENV: '"development"'
+      },
+    }),
+  ],
+
 })

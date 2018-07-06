@@ -1,21 +1,13 @@
-const path = require("path")
+const { resolve } = require("./util.js")
+
 const HtmlWebpackPlugin = require("html-webpack-plugin")
 const VueLoaderPlugin = require("vue-loader/lib/plugin")
 
-function resolve(dir) {
-  return path.resolve(__dirname, dir)
-}
-
-const globalNodeModules = resolve("../node_modules")
+const Root_Node_Modules = resolve("node_modules")
 
 module.exports = {
   entry: {
     app: ["babel-polyfill", "./src/app.js"],
-  },
-
-  output: {
-    path: resolve("../www/js"),
-    filename: "[name].[chunkhash:10].js",
   },
 
   module: {
@@ -24,7 +16,7 @@ module.exports = {
         test: /\.js?$/,
         loader: "babel-loader",
         exclude: (file) => {
-          return file.startsWith(globalNodeModules)
+          return file.startsWith(Root_Node_Modules)
         },
       },
       {
@@ -61,14 +53,6 @@ module.exports = {
 
     new VueLoaderPlugin(),
   ],
-
-  optimization: {
-    runtimeChunk: "single",
-    splitChunks: {
-      chunks: "all",
-      name: "vendor",
-    },
-  },
 
   node: {
     // prevent webpack from injecting useless setImmediate polyfill because Vue

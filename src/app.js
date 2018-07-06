@@ -61,7 +61,7 @@ new Vue({
   store,
 
   el: "#app",
-  render: (h) => h("router-view"),
+  render: (h) => h(AppRoot),
 
   data: {
     IsBack: false,
