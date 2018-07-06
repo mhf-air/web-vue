@@ -15,6 +15,9 @@ html(lang="cmn-Hans-CN")
   
     link(rel="stylesheet" href="/css/normalize.css")
     link(rel="stylesheet" href="/css/main.css")
+
+    each css in htmlWebpackPlugin.files.css
+      link(rel="stylesheet" href="/" + css)
   
   body
     div#app

@@ -14,6 +14,15 @@ module.exports = merge(common, {
     filename: "[name].js",
   },
 
+  module: {
+    rules: [ //
+      {
+        test: /\.styl(us)?$/,
+        use: ["vue-style-loader", "css-loader", "stylus-loader"],
+      }
+    ],
+  },
+
   devServer: {
     contentBase: resolve("www"),
     historyApiFallback: true,
