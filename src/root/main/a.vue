@@ -1,6 +1,7 @@
 <template lang="pug">
 div.root
   div hello
+  router-link(to="/app/login") 登录
 </template>
 
 <script>

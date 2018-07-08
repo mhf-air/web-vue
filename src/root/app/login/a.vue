@@ -1,6 +1,7 @@
 <template lang="pug">
 div.root
   div.content 欢迎使用
+  div hello
 </template>
 
 <script>
