@@ -2,7 +2,8 @@ const { resolve } = require("./util.js")
 const common = require("./webpack.common.js")
 
 const merge = require("webpack-merge")
-const webpack = require("webpack")
+
+const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 
 module.exports = merge(common, {
   mode: "development",
@@ -10,9 +11,34 @@ module.exports = merge(common, {
 
   output: {
     // publicPath: "/",
-    path: resolve("www/js"),
-    filename: "[name].js",
+    path: resolve("www"),
+    filename: "js/[name].js",
   },
+
+  module: {
+    rules: [ //
+      {
+        test: /\.styl(us)?$/,
+        use: ["vue-style-loader", "css-loader", "stylus-loader"],
+      },
+      {
+        test: /\.css$/,
+        use: [ //
+          {
+            loader: MiniCssExtractPlugin.loader,
+            options: {},
+          },
+          "css-loader",
+        ],
+      },
+    ],
+  },
+
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: "css/[name].css",
+    }),
+  ],
 
   devServer: {
     contentBase: resolve("www"),
@@ -50,13 +76,4 @@ module.exports = merge(common, {
       ],
     },
   },
-
-  plugins: [
-    new webpack.DefinePlugin({
-      "process.env": {
-        NODE_ENV: '"development"'
-      },
-    }),
-  ],
-
 })

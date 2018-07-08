@@ -12,9 +12,9 @@ html(lang="cmn-Hans-CN")
     link(rel="manifest" href="site.webmanifest")
     link(rel="icon" type="image/png" href="/favicon.png")
     link(rel="apple-touch-icon" href="/image/lion.svg")
-  
-    link(rel="stylesheet" href="/css/normalize.css")
-    link(rel="stylesheet" href="/css/main.css")
+
+    each css in htmlWebpackPlugin.files.css
+      script(src="/" + css)
   
   body
     div#app

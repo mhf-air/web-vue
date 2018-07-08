@@ -37,16 +37,12 @@ module.exports = {
           },
         ],
       },
-      {
-        test: /\.styl(us)?$/,
-        use: ["vue-style-loader", "css-loader", "stylus-loader"],
-      }
     ],
   },
 
   plugins: [
     new HtmlWebpackPlugin({
-      filename: "../index.html",
+      filename: "index.html",
       template: "src/static/index.pug",
       inject: false,
     }),

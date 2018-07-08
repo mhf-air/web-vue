@@ -26,6 +26,10 @@ const router = new VueRouter({
   },
 })
 
+// global css
+import "./static/css/normalize.css"
+import "./static/css/main.css"
+
 // app specific components
 import Components from "./components"
 Vue.use(Components)

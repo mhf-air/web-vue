@@ -2,8 +2,8 @@ const { resolve } = require("./util.js")
 const common = require("./webpack.common.js")
 
 const merge = require("webpack-merge")
-const webpack = require("webpack")
 
+const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 const PrerenderSPAPlugin = require("prerender-spa-plugin")
 
 module.exports = merge(common, {
@@ -11,16 +11,47 @@ module.exports = merge(common, {
   stats: "minimal",
 
   output: {
-    publicPath: "/", // may be cdn
-    path: resolve("www/js"),
-    filename: "[name].[chunkhash:10].js",
+    // publicPath: "/", // may be cdn
+    path: resolve("www"),
+    filename: "js/[name].[contenthash:10].js",
+  },
+
+  module: {
+    rules: [ //
+      {
+        test: /\.styl(us)?$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          {
+            loader: "css-loader",
+            options: {
+              minify: true,
+            },
+          },
+          "stylus-loader",
+        ],
+      },
+      {
+        test: /\.css$/,
+        use: [ //
+          {
+            loader: MiniCssExtractPlugin.loader,
+            options: {},
+          },
+          {
+            loader: "css-loader",
+            options: {
+              minify: true,
+            },
+          },
+        ],
+      },
+    ],
   },
 
   plugins: [
-    new webpack.DefinePlugin({
-      "process.env": {
-        NODE_ENV: '"production"'
-      },
+    new MiniCssExtractPlugin({
+      filename: "css/[name].[contenthash:10].css",
     }),
 
     new PrerenderSPAPlugin({
