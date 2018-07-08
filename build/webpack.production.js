@@ -25,7 +25,7 @@ module.exports = merge(common, {
           {
             loader: "css-loader",
             options: {
-              minify: true,
+              minimize: true,
             },
           },
           "stylus-loader",
@@ -41,7 +41,7 @@ module.exports = merge(common, {
           {
             loader: "css-loader",
             options: {
-              minify: true,
+              minimize: true,
             },
           },
         ],
