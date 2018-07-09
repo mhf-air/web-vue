@@ -9,6 +9,8 @@ module.exports = merge(common, {
   mode: "development",
   stats: "minimal",
 
+  devtool: "inline-source-map",
+
   output: {
     // publicPath: "/",
     path: resolve("www"),
@@ -29,6 +31,45 @@ module.exports = merge(common, {
             options: {},
           },
           "css-loader",
+        ],
+      },
+      {
+        test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
+        use: [ //
+          {
+            loader: "file-loader",
+            options: {
+              name: "[path][name].[ext]",
+              context: resolve("src/static"),
+              publicPath: "/",
+            },
+          },
+        ],
+      },
+      {
+        test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/,
+        use: [ //
+          {
+            loader: "file-loader",
+            options: {
+              name: "[path][name].[ext]",
+              context: resolve("src/static"),
+              publicPath: "/",
+            },
+          },
+        ],
+      },
+      {
+        test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
+        use: [ //
+          {
+            loader: "file-loader",
+            options: {
+              name: "[path][name].[ext]",
+              context: resolve("src/static"),
+              publicPath: "/",
+            },
+          },
         ],
       },
     ],

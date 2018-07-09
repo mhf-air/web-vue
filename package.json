@@ -10,7 +10,7 @@
     "dev-server": "webpack-dev-server --config build/webpack.dev.js",
     "dev-watch": "webpack --config build/webpack.dev.js --watch --progress",
     "dev": "npm-run-all -p dev-server dev-watch",
-    "p-js": "webpack --config build/webpack.production.js --progress",
+    "p-js": "yarn clean; webpack --config build/webpack.production.js --progress",
     "clean": "rm -r www",
     "update": "yarn upgrade-interactive --latest",
     "nothing": "echo"
@@ -28,6 +28,7 @@
     "babel-loader": "^7.1.5",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.7.0",
+    "compression-webpack-plugin": "^1.1.11",
     "css-loader": "^0.28.11",
     "file-loader": "^1.1.11",
     "html-webpack-plugin": "^3.2.0",

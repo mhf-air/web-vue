@@ -5,6 +5,7 @@ const merge = require("webpack-merge")
 
 const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 const PrerenderSPAPlugin = require("prerender-spa-plugin")
+// const CompressionWebpackPlugin = require("compression-webpack-plugin")
 
 module.exports = merge(common, {
   mode: "production",
@@ -42,6 +43,45 @@ module.exports = merge(common, {
             loader: "css-loader",
             options: {
               minimize: true,
+            },
+          },
+        ],
+      },
+      {
+        test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
+        use: [ //
+          {
+            loader: "file-loader",
+            options: {
+              name: "[path][name].[hash:10].[ext]",
+              context: resolve("src/static"),
+              publicPath: "/",
+            },
+          },
+        ],
+      },
+      {
+        test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/,
+        use: [ //
+          {
+            loader: "file-loader",
+            options: {
+              name: "[path][name].[hash:10].[ext]",
+              context: resolve("src/static"),
+              publicPath: "/",
+            },
+          },
+        ],
+      },
+      {
+        test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
+        use: [ //
+          {
+            loader: "file-loader",
+            options: {
+              name: "[path][name].[hash:10].[ext]",
+              context: resolve("src/static"),
+              publicPath: "/",
             },
           },
         ],
@@ -95,6 +135,8 @@ module.exports = merge(common, {
         useShortDoctype: true,
       },
     }),
+
+    // new CompressionWebpackPlugin(),
   ],
 
   optimization: {

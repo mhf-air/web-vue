@@ -15,6 +15,7 @@ module.exports = {
       {
         test: /\.js?$/,
         loader: "babel-loader",
+        include: resolve("src"),
         exclude: (file) => {
           return file.startsWith(Root_Node_Modules)
         },
