@@ -5,15 +5,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+
+	"../util"
 )
 
 func main() {
-	getDiff()
+	deployAsset()
+	// deployHtml()
+	// clean()
 }
 
+const (
+	DOMAIN     = "http://localhost:9000"
+	LOCAL_ROOT = "/home/mhf/js/src/web-vue/www"
+)
+
 func getDiff() []string {
-	result := getLocalFileList()
+	result := util.GetLocalFileList(LOCAL_ROOT)
 	buf := post("/get-diff", result)
 	list := []string{}
 	err := json.Unmarshal(buf, &list)
@@ -21,43 +31,40 @@ func getDiff() []string {
 	return list
 }
 
-func getLocalFileList() []string {
-	const localRoot = "/home/mhf/js/src/web-vue/www"
-	result := getLocalFile(len(localRoot), localRoot, func(name string) bool {
-		if name == "index.html" || name == "prerender" {
-			return true
-		}
-		return false
-	})
-	return result
-}
-
-func getLocalFile(prefixLen int, dir string, shouldSkip func(string) bool) []string {
-	list, err := ioutil.ReadDir(dir)
-	ck(err)
-
-	var result []string
-
-	for _, item := range list {
-		name := item.Name()
-		if shouldSkip != nil && shouldSkip(name) {
-			continue
-		}
-
-		fullName := dir + "/" + name
-		if item.IsDir() {
-			result = append(result, getLocalFile(prefixLen, fullName, nil)...)
-		} else {
-			result = append(result, fullName[prefixLen:])
-		}
+func deployAsset() {
+	list := getDiff()
+	if len(list) == 0 {
+		fmt.Println("no new files to be deployed")
+		return
 	}
 
-	return result
+	result := util.Compress(LOCAL_ROOT, list)
+	buf := post("/deploy-asset", result)
+	if string(buf) != "ok" {
+		log.Fatal(string(buf))
+	}
+}
+
+func deployHtml() {
+	list := util.GetLocalHtmlList(LOCAL_ROOT)
+	list = append(list, "index.html")
+
+	result := util.Compress(LOCAL_ROOT, list)
+	buf := post("/deploy-html", result)
+	if string(buf) != "ok" {
+		log.Fatal(string(buf))
+	}
+}
+
+func clean() {
+	result := util.GetLocalFileList(LOCAL_ROOT)
+	buf := post("/clean", result)
+	if string(buf) != "ok" {
+		log.Fatal(string(buf))
+	}
 }
 
 // ================================================================================
-const DOMAIN = "http://localhost:9000"
-
 func post(path string, data interface{}) []byte {
 	b, err := json.Marshal(data)
 	ck(err)

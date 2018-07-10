@@ -1,2 +1,7 @@
-# web-vue
-use vue to build a website
+# Web-Vue
+## framework for building a website
+
+### tech stack
+* vue, vue-router, vuex
+* webpack
+* axios

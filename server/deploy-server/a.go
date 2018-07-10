@@ -6,31 +6,39 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+
+	"../util"
 )
 
 const (
-	port = ":9000"
+	PORT       = ":9000"
+	LOCAL_ROOT = "/home/mhf/js/src/web-vue/www"
 )
 
 func main() {
 	fmt.Println("deploy server started")
 
-	log.Fatal(http.ListenAndServe(port, http.HandlerFunc(DeployServer)))
+	log.Fatal(http.ListenAndServe(PORT, http.HandlerFunc(DeployServer)))
+}
+
+var routeMap = map[string]func(http.ResponseWriter, *http.Request){
+	"/get-diff":     getDiff,
+	"/deploy-html":  deployHtml,
+	"/deploy-asset": deployAsset,
+	"/clean":        clean,
 }
 
 func DeployServer(w http.ResponseWriter, req *http.Request) {
 	fmt.Println(req.URL.Path)
 
-	switch req.URL.Path {
-	case "/get-diff":
-		getDiff(w, req)
-	case "/deploy":
-		deploy(w, req)
-	case "clean":
-		clean(w, req)
-	default:
+	f, ok := routeMap[req.URL.Path]
+	if !ok {
 		w.WriteHeader(http.StatusNotFound)
+		return
 	}
+
+	f(w, req)
 }
 
 // input: new www structure
@@ -49,7 +57,7 @@ func getDiff(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	oldList := getLocalFileList()
+	oldList := util.GetLocalFileList(LOCAL_ROOT)
 	oldMap := make(map[string]bool, len(oldList))
 	for _, item := range oldList {
 		oldMap[item] = true
@@ -74,52 +82,127 @@ func getDiff(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// input: new files in www and index.html and prerender
-func deploy(w http.ResponseWriter, req *http.Request) {
+func deployAsset(w http.ResponseWriter, req *http.Request) {
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+	err = os.Chdir(LOCAL_ROOT)
+	if err != nil {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+	defer os.Chdir(pwd)
+
+	m := util.Uncompress(body)
+	for file, data := range m {
+		err := ioutil.WriteFile(file, data, 0600)
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(http.StatusNotAcceptable)
+			return
+		}
+	}
+
+	_, err = w.Write([]byte("ok"))
+	if err != nil {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+}
+
+func deployHtml(w http.ResponseWriter, req *http.Request) {
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+	err = os.Chdir(LOCAL_ROOT)
+	if err != nil {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+	defer os.Chdir(pwd)
+
+	// TODO
+	m := util.Uncompress(body)
+	for file, data := range m {
+		err := ioutil.WriteFile(file, data, 0600)
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(http.StatusNotAcceptable)
+			return
+		}
+	}
+
+	_, err = w.Write([]byte("ok"))
+	if err != nil {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
 }
 
 // input: old files in www
 func clean(w http.ResponseWriter, req *http.Request) {
-}
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
 
-// ================================================================================
+	list := []string{}
+	err = json.Unmarshal(body, &list)
+	if err != nil {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+	newMap := make(map[string]bool, len(list))
+	for _, item := range list {
+		newMap[item] = true
+	}
 
-func getLocalFileList() []string {
-	const localRoot = "/home/mhf/js/src/web-vue/www"
-	result := getLocalFile(len(localRoot), localRoot, func(name string) bool {
-		if name == "index.html" || name == "prerender" {
-			return true
-		}
-		return false
-	})
-	return result
-}
-
-func getLocalFile(prefixLen int, dir string, shouldSkip func(string) bool) []string {
-	list, err := ioutil.ReadDir(dir)
-	ck(err)
+	oldList := util.GetLocalFileList(LOCAL_ROOT)
 
 	var result []string
-
-	for _, item := range list {
-		name := item.Name()
-		if shouldSkip != nil && shouldSkip(name) {
-			continue
-		}
-
-		fullName := dir + "/" + name
-		if item.IsDir() {
-			result = append(result, getLocalFile(prefixLen, fullName, nil)...)
-		} else {
-			result = append(result, fullName[prefixLen:])
+	for _, item := range oldList {
+		if _, ok := newMap[item]; !ok {
+			result = append(result, item)
 		}
 	}
 
-	return result
-}
-
-func ck(err error) {
+	// clean
+	pwd, err := os.Getwd()
 	if err != nil {
-		panic(err)
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+	err = os.Chdir(LOCAL_ROOT)
+	if err != nil {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+	defer os.Chdir(pwd)
+
+	for _, item := range result {
+		os.Remove(item)
+	}
+
+	_, err = w.Write([]byte("ok"))
+	if err != nil {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
 	}
 }
