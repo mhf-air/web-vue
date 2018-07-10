@@ -24,7 +24,7 @@ func GetLocalFileList(root string) []string {
 	}
 
 	result := getLocalFile(prefixLen, root, func(name string) bool {
-		if name == "index.html" || name == "prerender" {
+		if name == "index.html" || name == "prerender" || strings.HasPrefix(name, ".") {
 			return true
 		}
 		return false
