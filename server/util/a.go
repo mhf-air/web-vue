@@ -3,12 +3,10 @@ package util
 import (
 	"archive/tar"
 	"bytes"
-	"compress/gzip"
 	"io"
 	"io/ioutil"
 	"os"
 	"strings"
-	"time"
 )
 
 func ck(err error) {
@@ -98,7 +96,7 @@ func Compress(dir string, fileList []string) []byte {
 	ck(err)
 
 	// gzip
-	var (
+	/* var (
 		gzipBuf bytes.Buffer
 		zw      = gzip.NewWriter(&gzipBuf)
 	)
@@ -110,25 +108,25 @@ func Compress(dir string, fileList []string) []byte {
 	_, err = zw.Write(tarBuf.Bytes())
 	ck(err)
 	err = zw.Close()
-	ck(err)
+	ck(err) */
 
-	return gzipBuf.Bytes()
+	return tarBuf.Bytes()
 }
 
 func Uncompress(data []byte) map[string][]byte {
 	// gzip
-	zr, err := gzip.NewReader(bytes.NewBuffer(data))
+	/* zr, err := gzip.NewReader(bytes.NewBuffer(data))
 	ck(err)
 	buf, err := ioutil.ReadAll(zr)
 	ck(err)
 	err = zr.Close()
-	ck(err)
+	ck(err) */
 
 	// map
 	m := map[string][]byte{}
 
 	// tar
-	tr := tar.NewReader(bytes.NewBuffer(buf))
+	tr := tar.NewReader(bytes.NewBuffer(data))
 	for {
 		header, err := tr.Next()
 		if err == io.EOF {

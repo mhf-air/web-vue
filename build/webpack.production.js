@@ -10,6 +10,7 @@ const CompressionWebpackPlugin = require("compression-webpack-plugin")
 module.exports = merge(common, {
   mode: "production",
   stats: "minimal",
+  // stats: "verbose",
 
   output: {
     publicPath: "/", // may be cdn

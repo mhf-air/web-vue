@@ -28,6 +28,7 @@ func main() {
 
 var htmlHeaderMap = map[string]string{
 	"X-Content-Type-Options": "nosniff",
+	"X-Frame-Options":        "SAMEORIGIN",
 	"X-XSS-Protection":       "1; mode=block",
 }
 
@@ -51,24 +52,22 @@ func WebServer(w http.ResponseWriter, req *http.Request) {
 		needGzip = true
 	}
 
-	if preRenderMap[path] {
+	newPath := WEB_ROOT + path
+	/* if preRenderMap[path] {
 		needGzip = true
-		newPath := WEB_ROOT + "/prerender" + HTML_ROOT_FILE
 		if path != "/" {
 			newPath = WEB_ROOT + "/prerender" + path + HTML_ROOT_FILE
+		} else {
+			newPath = WEB_ROOT + "/prerender" + HTML_ROOT_FILE
 		}
-		f, err = os.Open(newPath)
+	} */
+
+	f, err = os.Open(newPath)
+	if err != nil {
+		needGzip = true
+		f, err = os.Open(WEB_ROOT + HTML_ROOT_FILE)
 		if err != nil {
 			panic(err)
-		}
-	} else {
-		f, err = os.Open(WEB_ROOT + path)
-		if err != nil {
-			needGzip = true
-			f, err = os.Open(WEB_ROOT + HTML_ROOT_FILE)
-			if err != nil {
-				panic(err)
-			}
 		}
 	}
 	defer f.Close()
