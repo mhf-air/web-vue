@@ -2,6 +2,7 @@ const { resolve } = require("./util.js")
 
 const HtmlWebpackPlugin = require("html-webpack-plugin")
 const VueLoaderPlugin = require("vue-loader/lib/plugin")
+const AutodllWebpackPlugin = require("autodll-webpack-plugin")
 
 const Root_Node_Modules = resolve("node_modules")
 
@@ -46,6 +47,22 @@ module.exports = {
       filename: "index.html",
       template: "src/static/index.pug",
       inject: false,
+    }),
+
+    new AutodllWebpackPlugin({
+      inject: true,
+      debug: true,
+      filename: "[name].[hash:10].js",
+      path: "js",
+      entry: {
+        vendor: [
+          "vue",
+          "vue-router",
+          "vuex",
+          "axios",
+          "babel-polyfill",
+        ],
+      },
     }),
 
     new VueLoaderPlugin(),

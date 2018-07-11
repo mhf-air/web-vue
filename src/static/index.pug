@@ -14,7 +14,7 @@ html(lang="cmn-Hans-CN")
     link(rel="apple-touch-icon" href="/image/lion.svg")
 
     each css in htmlWebpackPlugin.files.css
-      link(rel="stylesheet" href="/" + css)
+      link(rel="stylesheet" href=css)
   
   body
     noscript
@@ -23,6 +23,6 @@ html(lang="cmn-Hans-CN")
     div#app
 
     each js in htmlWebpackPlugin.files.js
-      script(src="/" + js)
+      script(src=js)
 
 //- title #{htmlWebpackPlugin.options.title}

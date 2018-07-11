@@ -5,14 +5,14 @@ const merge = require("webpack-merge")
 
 const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 const PrerenderSPAPlugin = require("prerender-spa-plugin")
-// const CompressionWebpackPlugin = require("compression-webpack-plugin")
+const CompressionWebpackPlugin = require("compression-webpack-plugin")
 
 module.exports = merge(common, {
   mode: "production",
   stats: "minimal",
 
   output: {
-    // publicPath: "/", // may be cdn
+    publicPath: "/", // may be cdn
     path: resolve("www"),
     filename: "js/[name].[contenthash:10].js",
   },
@@ -94,7 +94,7 @@ module.exports = merge(common, {
       filename: "css/[name].[contenthash:10].css",
     }),
 
-    new PrerenderSPAPlugin({
+    /* new PrerenderSPAPlugin({
       staticDir: resolve("www"),
       outputDir: resolve("www/prerender"),
       routes: [
@@ -134,17 +134,22 @@ module.exports = merge(common, {
         trimCustomFragments: true,
         useShortDoctype: true,
       },
-    }),
+    }), */
 
-    // new CompressionWebpackPlugin(),
+    new CompressionWebpackPlugin({
+      test: /\.(js|css|html)$/,
+      algorithm: "gzip",
+      asset: "[path]",
+      // deleteOriginalAssets: true,
+    }),
   ],
 
   optimization: {
     runtimeChunk: "single",
-    splitChunks: {
+    /* splitChunks: {
       chunks: "all",
       name: "vendor",
-    },
+    }, */
   },
 
 })

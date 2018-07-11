@@ -5,10 +5,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 const (
-	webRoot = "www"
+	WEB_ROOT       = "/home/mhf/js/src/web-vue/www"
+	HTML_ROOT_FILE = "/index.html"
 )
 
 func main() {
@@ -25,7 +27,6 @@ func main() {
 }
 
 var htmlHeaderMap = map[string]string{
-	// "Content-Encoding":       "gzip",
 	"X-Content-Type-Options": "nosniff",
 	"X-XSS-Protection":       "1; mode=block",
 }
@@ -34,24 +35,37 @@ var preRenderMap = map[string]bool{
 	"/": true,
 }
 
-const htmlRootFile = "/index.html"
-
 func WebServer(w http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
+	fmt.Println(path)
 
-	println(path)
-	var f *os.File
-	var err error
+	var (
+		f        *os.File
+		err      error
+		needGzip = false
+	)
+
+	if strings.HasSuffix(path, ".js") ||
+		strings.HasSuffix(path, ".css") ||
+		strings.HasSuffix(path, ".html") {
+		needGzip = true
+	}
 
 	if preRenderMap[path] {
-		f, err = os.Open(webRoot + "/prerender" + path + htmlRootFile)
+		needGzip = true
+		newPath := WEB_ROOT + "/prerender" + HTML_ROOT_FILE
+		if path != "/" {
+			newPath = WEB_ROOT + "/prerender" + path + HTML_ROOT_FILE
+		}
+		f, err = os.Open(newPath)
 		if err != nil {
 			panic(err)
 		}
 	} else {
-		f, err = os.Open(webRoot + path)
+		f, err = os.Open(WEB_ROOT + path)
 		if err != nil {
-			f, err = os.Open(webRoot + htmlRootFile)
+			needGzip = true
+			f, err = os.Open(WEB_ROOT + HTML_ROOT_FILE)
 			if err != nil {
 				panic(err)
 			}
@@ -60,8 +74,9 @@ func WebServer(w http.ResponseWriter, req *http.Request) {
 	defer f.Close()
 
 	d, err := f.Stat()
-	if err != nil || d.IsDir() {
-		f, err = os.Open(webRoot + htmlRootFile)
+	if err != nil || (d.IsDir() && !strings.Contains(path, "/.")) {
+		needGzip = true
+		f, err = os.Open(WEB_ROOT + HTML_ROOT_FILE)
 		if err != nil {
 			panic(err)
 		}
@@ -69,6 +84,10 @@ func WebServer(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			panic(err)
 		}
+	}
+
+	if needGzip {
+		w.Header().Add("Content-Encoding", "gzip")
 	}
 
 	// set header must occur before write to body

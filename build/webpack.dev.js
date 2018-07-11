@@ -12,7 +12,7 @@ module.exports = merge(common, {
   devtool: "inline-source-map",
 
   output: {
-    // publicPath: "/",
+    publicPath: "/",
     path: resolve("www"),
     filename: "js/[name].js",
   },
