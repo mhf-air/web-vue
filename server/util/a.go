@@ -3,9 +3,11 @@ package util
 import (
 	"archive/tar"
 	"bytes"
+	"encoding/base64"
 	"io"
 	"io/ioutil"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -64,7 +66,7 @@ func getLocalFile(prefixLen int, dir string, shouldSkip func(string) bool) []str
 	return result
 }
 
-func Compress(dir string, fileList []string) []byte {
+func Compress(dir string, fileList []string) string {
 	pwd, err := os.Getwd()
 	ck(err)
 	err = os.Chdir(dir)
@@ -110,10 +112,17 @@ func Compress(dir string, fileList []string) []byte {
 	err = zw.Close()
 	ck(err) */
 
-	return tarBuf.Bytes()
+	// base64
+	result := base64.StdEncoding.EncodeToString(tarBuf.Bytes())
+
+	return result
 }
 
-func Uncompress(data []byte) map[string][]byte {
+func Uncompress(data string) map[string][]byte {
+	// base64
+	decoded, err := base64.StdEncoding.DecodeString(data)
+	ck(err)
+
 	// gzip
 	/* zr, err := gzip.NewReader(bytes.NewBuffer(data))
 	ck(err)
@@ -126,7 +135,7 @@ func Uncompress(data []byte) map[string][]byte {
 	m := map[string][]byte{}
 
 	// tar
-	tr := tar.NewReader(bytes.NewBuffer(data))
+	tr := tar.NewReader(bytes.NewBuffer(decoded))
 	for {
 		header, err := tr.Next()
 		if err == io.EOF {
@@ -139,4 +148,81 @@ func Uncompress(data []byte) map[string][]byte {
 	}
 
 	return m
+}
+
+func DirList(pathList []string) []string {
+	m := map[string]bool{}
+	for _, p := range pathList {
+		list := subDirList(p)
+		for _, item := range list {
+			m[item] = true
+		}
+	}
+
+	result := make([]string, len(m))
+	i := 0
+	for k := range m {
+		result[i] = k
+		i++
+	}
+
+	sort.Strings(result)
+	return result
+}
+
+func subDirList(s string) []string {
+	indexList := []int{}
+	sLen := len(s)
+	for i := 0; i < sLen; i++ {
+		if s[i] == '/' {
+			indexList = append(indexList, i)
+		}
+	}
+
+	indexLen := len(indexList)
+	list := make([]string, indexLen)
+	for i := 0; i < indexLen; i++ {
+		list[i] = s[:indexList[i]]
+	}
+	return list
+}
+
+func Mkdir(list []string) {
+	for _, dir := range list {
+		err := os.MkdirAll(dir, 0700)
+		ck(err)
+	}
+}
+
+func MkHtmlDir() {
+	list := []string{
+		"html", "html/ready", "html/run", "html/last",
+	}
+	for _, dir := range list {
+		err := os.MkdirAll(dir, 0700)
+		ck(err)
+	}
+}
+
+type WWW struct {
+	DirList []string `json:"dir_list"`
+	Data    string   `json:"data"`
+}
+
+func Cd(dir string) (string, error) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	err = os.Chdir(dir)
+	if err != nil {
+		return "", err
+	}
+	return pwd, nil
+}
+
+type ApiResult struct {
+	Code         int         `json:"code"`
+	Data         interface{} `json:"data"`
+	ErrorMessage string      `json:"error_message"`
 }

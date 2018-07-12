@@ -10,7 +10,8 @@ import (
 
 const (
 	WEB_ROOT       = "/home/mhf/js/src/web-vue/www"
-	HTML_ROOT_FILE = "/index.html"
+	HTML_ROOT_FILE = WEB_ROOT + "/html/run/index.html"
+	PRERENDER      = WEB_ROOT + "/html/run/prerender"
 )
 
 func main() {
@@ -53,19 +54,19 @@ func WebServer(w http.ResponseWriter, req *http.Request) {
 	}
 
 	newPath := WEB_ROOT + path
-	/* if preRenderMap[path] {
+	if preRenderMap[path] {
 		needGzip = true
 		if path != "/" {
-			newPath = WEB_ROOT + "/prerender" + path + HTML_ROOT_FILE
+			newPath = PRERENDER + path + "/index.html"
 		} else {
-			newPath = WEB_ROOT + "/prerender" + HTML_ROOT_FILE
+			newPath = PRERENDER + "/index.html"
 		}
-	} */
+	}
 
 	f, err = os.Open(newPath)
 	if err != nil {
 		needGzip = true
-		f, err = os.Open(WEB_ROOT + HTML_ROOT_FILE)
+		f, err = os.Open(HTML_ROOT_FILE)
 		if err != nil {
 			panic(err)
 		}
@@ -75,7 +76,7 @@ func WebServer(w http.ResponseWriter, req *http.Request) {
 	d, err := f.Stat()
 	if err != nil || (d.IsDir() && !strings.Contains(path, "/.")) {
 		needGzip = true
-		f, err = os.Open(WEB_ROOT + HTML_ROOT_FILE)
+		f, err = os.Open(HTML_ROOT_FILE)
 		if err != nil {
 			panic(err)
 		}

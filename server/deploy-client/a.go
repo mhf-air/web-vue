@@ -11,9 +11,28 @@ import (
 	"../util"
 )
 
+/*
+-> means rename
+
+deployHtml
+  local   =>    ready
+
+runNew
+  ready   ->    run
+
+runNewWithBackup
+  run     ->    last
+  ready   ->    run
+
+runLast
+  run     ->    ready
+  last    ->    run
+*/
+
 func main() {
 	deployAsset()
-	// deployHtml()
+	deployHtml()
+
 	// clean()
 }
 
@@ -24,10 +43,11 @@ const (
 
 func getDiff() []string {
 	result := util.GetLocalFileList(LOCAL_ROOT)
-	buf := post("/get-diff", result)
-	list := []string{}
-	err := json.Unmarshal(buf, &list)
-	ck(err)
+	api := post("/get-diff", result).([]interface{})
+	list := make([]string, len(api))
+	for i, item := range api {
+		list[i] = item.(string)
+	}
 	return list
 }
 
@@ -38,34 +58,34 @@ func deployAsset() {
 		return
 	}
 
-	result := util.Compress(LOCAL_ROOT, list)
-	buf := post("/deploy-asset", result)
-	if string(buf) != "ok" {
-		log.Fatal(string(buf))
-	}
+	dirList := util.DirList(list)
+	data := util.Compress(LOCAL_ROOT, list)
+
+	post("/deploy-asset", &util.WWW{
+		DirList: dirList,
+		Data:    data,
+	})
 }
 
 func deployHtml() {
 	list := util.GetLocalHtmlList(LOCAL_ROOT)
-	list = append(list, "index.html")
 
-	result := util.Compress(LOCAL_ROOT, list)
-	buf := post("/deploy-html", result)
-	if string(buf) != "ok" {
-		log.Fatal(string(buf))
-	}
+	dirList := util.DirList(list)
+	data := util.Compress(LOCAL_ROOT, list)
+
+	post("/deploy-html", &util.WWW{
+		DirList: dirList,
+		Data:    data,
+	})
 }
 
 func clean() {
 	result := util.GetLocalFileList(LOCAL_ROOT)
-	buf := post("/clean", result)
-	if string(buf) != "ok" {
-		log.Fatal(string(buf))
-	}
+	post("/clean", result)
 }
 
 // ================================================================================
-func post(path string, data interface{}) []byte {
+func post(path string, data interface{}) interface{} {
 	b, err := json.Marshal(data)
 	ck(err)
 	resp, err := http.Post(DOMAIN+path, "application/json", bytes.NewBuffer(b))
@@ -79,7 +99,16 @@ func post(path string, data interface{}) []byte {
 
 	buf, err := ioutil.ReadAll(resp.Body)
 	ck(err)
-	return buf
+
+	api := &util.ApiResult{}
+	err = json.Unmarshal(buf, api)
+	ck(err)
+
+	if api.Code != 0 {
+		log.Fatal(api.ErrorMessage)
+	}
+
+	return api.Data
 }
 
 func ck(err error) {

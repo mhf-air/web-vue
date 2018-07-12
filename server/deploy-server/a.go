@@ -13,7 +13,11 @@ import (
 
 const (
 	PORT       = ":9000"
-	LOCAL_ROOT = "/home/mhf/js/src/web-vue/www"
+	LOCAL_ROOT = "/home/mhf/go/src/wiki/abc"
+
+	HTML_READY = LOCAL_ROOT + "/html/ready"
+	HTML_NEW   = LOCAL_ROOT + "/html/new"
+	HTML_LAST  = LOCAL_ROOT + "/html/last"
 )
 
 func main() {
@@ -22,39 +26,88 @@ func main() {
 	log.Fatal(http.ListenAndServe(PORT, http.HandlerFunc(DeployServer)))
 }
 
-var routeMap = map[string]func(http.ResponseWriter, *http.Request){
+var routeMap = map[string]func(*Context) (*util.ApiResult, error){
 	"/get-diff":     getDiff,
 	"/deploy-html":  deployHtml,
 	"/deploy-asset": deployAsset,
 	"/clean":        clean,
 }
 
+type Context struct {
+	w    http.ResponseWriter
+	req  *http.Request
+	body []byte
+}
+
+func (c *Context) api(r *util.ApiResult) {
+	buf, err := json.Marshal(r)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = c.w.Write(buf)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func apiResult(data interface{}) *util.ApiResult {
+	return &util.ApiResult{
+		Code: 0,
+		Data: data,
+	}
+}
+func apiError(errorMessage string) *util.ApiResult {
+	return &util.ApiResult{
+		Code:         1,
+		ErrorMessage: errorMessage,
+	}
+}
+
 func DeployServer(w http.ResponseWriter, req *http.Request) {
 	fmt.Println(req.URL.Path)
 
-	f, ok := routeMap[req.URL.Path]
-	if !ok {
-		w.WriteHeader(http.StatusNotFound)
+	// cd
+	pwd, err := util.Cd(LOCAL_ROOT)
+	if err != nil {
+		panic(err)
+	}
+	defer os.Chdir(pwd)
+
+	c := &Context{
+		w:   w,
+		req: req,
+	}
+	c.body, err = ioutil.ReadAll(req.Body)
+	if err != nil {
+		c.api(apiError(err.Error()))
 		return
 	}
 
-	f(w, req)
+	f, ok := routeMap[req.URL.Path]
+	if !ok {
+		c.api(apiError("route not found"))
+		return
+	}
+
+	// handler
+	result, err := f(c)
+	if err != nil {
+		c.api(apiError(err.Error()))
+	} else {
+		c.api(result)
+	}
 }
+
+// ================================================================================
 
 // input: new www structure
 // diff input with old www on server
-func getDiff(w http.ResponseWriter, req *http.Request) {
-	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
-	}
-
+func getDiff(c *Context) (*util.ApiResult, error) {
 	list := []string{}
-	err = json.Unmarshal(body, &list)
+	err := json.Unmarshal(c.body, &list)
 	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
+		return nil, err
 	}
 
 	oldList := util.GetLocalFileList(LOCAL_ROOT)
@@ -63,112 +116,76 @@ func getDiff(w http.ResponseWriter, req *http.Request) {
 		oldMap[item] = true
 	}
 
-	var result []string
+	result := []string{}
 	for _, item := range list {
 		if _, ok := oldMap[item]; !ok {
 			result = append(result, item)
 		}
 	}
 
-	b, jsonErr := json.Marshal(result)
-	if jsonErr != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
-	}
-	_, err = w.Write(b)
-	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
-	}
+	return apiResult(result), nil
 }
 
-func deployAsset(w http.ResponseWriter, req *http.Request) {
-	body, err := ioutil.ReadAll(req.Body)
+func deployAsset(c *Context) (*util.ApiResult, error) {
+	www := util.WWW{}
+	err := json.Unmarshal(c.body, &www)
 	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
+		return nil, err
 	}
 
-	pwd, err := os.Getwd()
-	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
-	}
-	err = os.Chdir(LOCAL_ROOT)
-	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
-	}
-	defer os.Chdir(pwd)
+	// ensure all the direcotries exist
+	util.Mkdir(www.DirList)
 
-	m := util.Uncompress(body)
+	m := util.Uncompress(www.Data)
 	for file, data := range m {
 		err := ioutil.WriteFile(file, data, 0600)
 		if err != nil {
-			fmt.Println(err)
-			w.WriteHeader(http.StatusNotAcceptable)
-			return
+			return nil, err
 		}
 	}
 
-	_, err = w.Write([]byte("ok"))
-	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
-	}
+	return apiResult(nil), nil
 }
 
-func deployHtml(w http.ResponseWriter, req *http.Request) {
-	body, err := ioutil.ReadAll(req.Body)
+func deployHtml(c *Context) (*util.ApiResult, error) {
+	www := util.WWW{}
+	err := json.Unmarshal(c.body, &www)
 	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
+		return nil, err
 	}
 
-	pwd, err := os.Getwd()
+	// ensure all the html direcotries exist
+	util.MkHtmlDir()
+
+	// cd
+	pwd, err := util.Cd(HTML_READY)
 	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
-	}
-	err = os.Chdir(LOCAL_ROOT)
-	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
+		panic(err)
 	}
 	defer os.Chdir(pwd)
 
-	// TODO
-	m := util.Uncompress(body)
+	// ensure all the direcotries exist
+	util.Mkdir(www.DirList)
+
+	m := util.Uncompress(www.Data)
 	for file, data := range m {
 		err := ioutil.WriteFile(file, data, 0600)
 		if err != nil {
-			fmt.Println(err)
-			w.WriteHeader(http.StatusNotAcceptable)
-			return
+			return nil, err
 		}
 	}
 
-	_, err = w.Write([]byte("ok"))
-	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
-	}
+	return apiResult(nil), nil
 }
 
 // input: old files in www
-func clean(w http.ResponseWriter, req *http.Request) {
-	body, err := ioutil.ReadAll(req.Body)
+func clean(c *Context) (*util.ApiResult, error) {
+	list := []string{}
+	err := json.Unmarshal(c.body, &list)
 	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
+		return nil, err
 	}
 
-	list := []string{}
-	err = json.Unmarshal(body, &list)
-	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
-	}
 	newMap := make(map[string]bool, len(list))
 	for _, item := range list {
 		newMap[item] = true
@@ -184,25 +201,9 @@ func clean(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// clean
-	pwd, err := os.Getwd()
-	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
-	}
-	err = os.Chdir(LOCAL_ROOT)
-	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
-	}
-	defer os.Chdir(pwd)
-
 	for _, item := range result {
 		os.Remove(item)
 	}
 
-	_, err = w.Write([]byte("ok"))
-	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
-	}
+	return apiResult(nil), nil
 }
