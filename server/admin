@@ -1,0 +1,25 @@
+
+# deploy
+in server
+  $ mkdir -p web web/bin web/www
+
+in client
+  $ ./scp-server.sh some-domain.com 
+
+in server
+  $ cd web/bin
+  $ ./pre-deploy.sh
+  $ ./deploy
+
+in client
+  $ go run server/deploy-client/a.go some-domain.com
+
+in server
+  $ ./run.sh new-backup
+
+# https
+in server
+  $ sudo crontab -e
+    > enter
+      # https cert renew
+      0 0 * * 1 certbot renew

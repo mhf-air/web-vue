@@ -17,6 +17,10 @@ func ck(err error) {
 	}
 }
 
+const (
+	DEPLOY_PORT = ":9003"
+)
+
 func GetLocalFileList(root string) []string {
 	prefixLen := len(root)
 	if !strings.HasSuffix(root, "/") {

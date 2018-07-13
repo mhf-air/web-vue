@@ -12,8 +12,7 @@ import (
 )
 
 const (
-	PORT       = ":9000"
-	LOCAL_ROOT = "/home/mhf/go/src/wiki/abc"
+	LOCAL_ROOT = "/home/mhf/web/www"
 
 	HTML_READY = LOCAL_ROOT + "/html/ready"
 	HTML_NEW   = LOCAL_ROOT + "/html/new"
@@ -23,7 +22,7 @@ const (
 func main() {
 	fmt.Println("deploy server started")
 
-	log.Fatal(http.ListenAndServe(PORT, http.HandlerFunc(DeployServer)))
+	log.Fatal(http.ListenAndServe(util.DEPLOY_PORT, http.HandlerFunc(DeployServer)))
 }
 
 var routeMap = map[string]func(*Context) (*util.ApiResult, error){

@@ -9,22 +9,24 @@ import (
 )
 
 const (
-	WEB_ROOT       = "/home/mhf/js/src/web-vue/www"
+	WEB_ROOT       = "/home/mhf/web/www"
 	HTML_ROOT_FILE = WEB_ROOT + "/html/run/index.html"
 	PRERENDER      = WEB_ROOT + "/html/run/prerender"
+
+	// NOTE remember to change this
+	DOMAIN = "a.com"
 )
 
 func main() {
 	fmt.Println("web server started")
 
-	log.Fatal(http.ListenAndServe(":9000", http.HandlerFunc(WebServer)))
+	// log.Fatal(http.ListenAndServe(":80", http.HandlerFunc(WebServer)))
 
-	/* const (
-			port     = ":8080"
-			certFile = "fullchain.pem"
-			keyFile  = "privkey.pem"
-		)
-	  log.Fatal(http.ListenAndServeTLS(port, certFile, keyFile, http.HandlerFunc(WebServer))) */
+	const (
+		certFile = "/etc/letsencrypt/live/" + DOMAIN + "/fullchain.pem"
+		keyFile  = "/etc/letsencrypt/live/" + DOMAIN + "/privkey.pem"
+	)
+	log.Fatal(http.ListenAndServeTLS(":443", certFile, keyFile, http.HandlerFunc(WebServer)))
 }
 
 var htmlHeaderMap = map[string]string{

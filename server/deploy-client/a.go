@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"../util"
 )
@@ -29,6 +30,13 @@ runLast
   last    ->    run
 */
 
+func init() {
+	if len(os.Args) < 2 {
+		log.Fatal("please provide a domain")
+	}
+	g_domain = os.Args[1] + util.DEPLOY_PORT
+}
+
 func main() {
 	deployAsset()
 	deployHtml()
@@ -37,8 +45,11 @@ func main() {
 }
 
 const (
-	DOMAIN     = "http://localhost:9000"
 	LOCAL_ROOT = "/home/mhf/js/src/web-vue/www"
+)
+
+var (
+	g_domain string
 )
 
 func getDiff() []string {
@@ -54,7 +65,7 @@ func getDiff() []string {
 func deployAsset() {
 	list := getDiff()
 	if len(list) == 0 {
-		fmt.Println("no new files to be deployed")
+		fmt.Println("no new assets to be deployed")
 		return
 	}
 
@@ -88,7 +99,7 @@ func clean() {
 func post(path string, data interface{}) interface{} {
 	b, err := json.Marshal(data)
 	ck(err)
-	resp, err := http.Post(DOMAIN+path, "application/json", bytes.NewBuffer(b))
+	resp, err := http.Post(g_domain+path, "application/json", bytes.NewBuffer(b))
 	ck(err)
 	defer resp.Body.Close()
 
